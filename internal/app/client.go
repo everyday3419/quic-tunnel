@@ -18,11 +18,7 @@ type Client struct {
 	tlsConf *tls.Config
 }
 
-func NewClient(
-	addr string,
-	logger zerolog.Logger,
-	tlsConf *tls.Config,
-) *Client {
+func NewClient(addr string, logger zerolog.Logger, tlsConf *tls.Config) *Client {
 	return &Client{
 		addr:    addr,
 		logger:  logger,
