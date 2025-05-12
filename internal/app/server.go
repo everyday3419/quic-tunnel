@@ -2,18 +2,34 @@ package app
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/everyday3419/quic-tunnel/internal/config"
-	"github.com/everyday3419/quic-tunnel/internal/http"
+	h "github.com/everyday3419/quic-tunnel/internal/http"
+	"github.com/everyday3419/quic-tunnel/internal/proxy"
 	"github.com/everyday3419/quic-tunnel/internal/transport"
 	"github.com/quic-go/quic-go"
 	"github.com/rs/zerolog"
 )
 
+type TransportProvider interface {
+	Serve(ctx context.Context, handler transport.StreamHandler) error
+	Close() error
+}
+
+type HTTPProvider interface {
+	ProcessStream(stream quic.Stream, handler h.RequestHandler) error
+}
+
+type ProxyProvider interface {
+	HandleRequest(req *http.Request) (*http.Response, error)
+	Close() error
+}
+
 type Server struct {
-	transport *transport.QUICTransport
-	httpProc  *http.HTTPProcessor
-	proxy     *http.Proxy
+	transport TransportProvider
+	httpProc  HTTPProvider
+	proxy     ProxyProvider
 	logger    *zerolog.Logger
 }
 
@@ -22,8 +38,8 @@ func NewServer(cfg *config.Config, logger *zerolog.Logger) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	httpProc := http.NewHTTPProcessor(logger)
-	proxy := http.NewProxy(logger, cfg.Timeout)
+	httpProc := h.NewHTTPProcessor(logger)
+	proxy := proxy.NewProxy(logger, cfg.Timeout)
 	return &Server{
 		transport: transport,
 		httpProc:  httpProc,
