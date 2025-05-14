@@ -1,12 +1,13 @@
-package app
+package server
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/everyday3419/quic-tunnel/internal/config"
-	h "github.com/everyday3419/quic-tunnel/internal/http"
-	"github.com/everyday3419/quic-tunnel/internal/proxy"
+	"github.com/everyday3419/quic-tunnel/internal/forwarder"
+	"github.com/everyday3419/quic-tunnel/internal/processor"
+
 	"github.com/everyday3419/quic-tunnel/internal/transport"
 	"github.com/quic-go/quic-go"
 	"github.com/rs/zerolog"
@@ -17,40 +18,40 @@ type TransportProvider interface {
 	Close() error
 }
 
-type HTTPProvider interface {
-	ProcessStream(stream quic.Stream, handler h.RequestHandler) error
+type ProcessorProvider interface {
+	ProcessStream(stream quic.Stream, handler processor.RequestHandler) error
 }
 
-type ProxyProvider interface {
+type ForwarderProvider interface {
 	HandleRequest(req *http.Request) (*http.Response, error)
 	Close() error
 }
 
 type Server struct {
 	transport TransportProvider
-	httpProc  HTTPProvider
-	proxy     ProxyProvider
+	processor ProcessorProvider
+	forwarder ForwarderProvider
 	logger    *zerolog.Logger
 }
 
-func NewServer(cfg *config.Config, logger *zerolog.Logger) (*Server, error) {
+func New(cfg *config.Config, logger *zerolog.Logger) (*Server, error) {
 	transport, err := transport.NewQUICTransport(cfg.Addr, cfg.TLSConfig, cfg.QUICConfig, logger)
 	if err != nil {
 		return nil, err
 	}
-	httpProc := h.NewHTTPProcessor(logger)
-	proxy := proxy.NewProxy(logger, cfg.Timeout)
+	processor := processor.New(logger)
+	forwarder := forwarder.New(logger, cfg.Timeout)
 	return &Server{
 		transport: transport,
-		httpProc:  httpProc,
-		proxy:     proxy,
+		processor: processor,
+		forwarder: forwarder,
 		logger:    logger,
 	}, nil
 }
 
 func (s *Server) Serve(ctx context.Context) error {
 	return s.transport.Serve(ctx, func(stream quic.Stream) error {
-		return s.httpProc.ProcessStream(stream, s.proxy.HandleRequest)
+		return s.processor.ProcessStream(stream, s.forwarder.HandleRequest)
 	})
 }
 
@@ -58,5 +59,5 @@ func (s *Server) Shutdown() error {
 	if err := s.transport.Close(); err != nil {
 		return err
 	}
-	return s.proxy.Close()
+	return s.forwarder.Close()
 }

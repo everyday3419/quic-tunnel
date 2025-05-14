@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/everyday3419/quic-tunnel/internal/app"
+	"github.com/everyday3419/quic-tunnel/internal/app/server"
 	"github.com/everyday3419/quic-tunnel/internal/config"
 	"github.com/rs/zerolog"
 )
@@ -13,7 +13,7 @@ import (
 func main() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	cfg := config.NewDefaultConfig(":4242")
-	srv, err := app.NewServer(cfg, &logger)
+	srv, err := server.New(cfg, &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to create server")
 	}

@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"os"
 
-	"github.com/everyday3419/quic-tunnel/internal/app"
+	"github.com/everyday3419/quic-tunnel/internal/app/client"
 	"github.com/rs/zerolog"
 )
 
@@ -19,6 +19,6 @@ func main() {
 		NextProtos:         []string{"quic-tunnel"},
 	}
 
-	tunnel := app.NewClient(addr, logger, tlsConf)
+	tunnel := client.New(addr, logger, tlsConf)
 	tunnel.Run()
 }

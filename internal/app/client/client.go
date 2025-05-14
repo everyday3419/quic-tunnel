@@ -1,4 +1,4 @@
-package app
+package client
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type Client struct {
 	tlsConf *tls.Config
 }
 
-func NewClient(addr string, logger zerolog.Logger, tlsConf *tls.Config) *Client {
+func New(addr string, logger zerolog.Logger, tlsConf *tls.Config) *Client {
 	return &Client{
 		addr:    addr,
 		logger:  logger,
@@ -39,7 +39,7 @@ func (t *Client) Run() {
 	defer stream.Close()
 
 	for {
-		req, err := http.NewRequest("GET", "https://cloudflare.com", nil)
+		req, err := http.NewRequest("GET", "https://github.com", nil)
 		if err != nil {
 			t.logger.Err(err).Msg("")
 			stream.Close()

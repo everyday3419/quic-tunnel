@@ -1,4 +1,4 @@
-package http
+package processor
 
 import (
 	"bufio"
@@ -13,15 +13,15 @@ import (
 
 type RequestHandler func(*http.Request) (*http.Response, error)
 
-type HTTPProcessor struct {
+type Processor struct {
 	logger *zerolog.Logger
 }
 
-func NewHTTPProcessor(logger *zerolog.Logger) *HTTPProcessor {
-	return &HTTPProcessor{logger: logger}
+func New(logger *zerolog.Logger) *Processor {
+	return &Processor{logger: logger}
 }
 
-func (p *HTTPProcessor) ProcessStream(stream quic.Stream, handler RequestHandler) error {
+func (p *Processor) ProcessStream(stream quic.Stream, handler RequestHandler) error {
 	if err := stream.SetReadDeadline(time.Now().Add(15 * time.Second)); err != nil {
 		return err
 	}
