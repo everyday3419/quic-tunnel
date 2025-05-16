@@ -22,7 +22,7 @@ func main() {
 	defer cancel()
 
 	go func() {
-		if err := srv.Serve(ctx); err != nil {
+		if err := srv.Run(ctx); err != nil {
 			logger.Error().Err(err).Msg("server failed")
 		}
 	}()

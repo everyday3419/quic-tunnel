@@ -7,9 +7,9 @@ import (
 	"github.com/everyday3419/quic-tunnel/internal/config"
 	"github.com/everyday3419/quic-tunnel/internal/forwarder"
 	"github.com/everyday3419/quic-tunnel/internal/processor"
+	"github.com/quic-go/quic-go"
 
 	"github.com/everyday3419/quic-tunnel/internal/transport"
-	"github.com/quic-go/quic-go"
 	"github.com/rs/zerolog"
 )
 
@@ -49,7 +49,7 @@ func New(cfg *config.Config, logger *zerolog.Logger) (*Server, error) {
 	}, nil
 }
 
-func (s *Server) Serve(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context) error {
 	return s.transport.Serve(ctx, func(stream quic.Stream) error {
 		return s.processor.ProcessStream(stream, s.forwarder.HandleRequest)
 	})

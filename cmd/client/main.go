@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"os"
 
@@ -8,7 +9,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const addr = "localhost:4242"
+const addr = "localhost:8888"
+const serverAddr = "localhost:4242"
 
 func main() {
 	output := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: false}
@@ -19,6 +21,6 @@ func main() {
 		NextProtos:         []string{"quic-tunnel"},
 	}
 
-	tunnel := client.New(addr, logger, tlsConf)
-	tunnel.Run()
+	tunnel := client.New(addr, serverAddr, logger, tlsConf, nil)
+	tunnel.Run(context.Background())
 }
