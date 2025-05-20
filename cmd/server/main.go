@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 
@@ -11,9 +12,15 @@ import (
 )
 
 func main() {
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	cfg := config.NewDefaultConfig(":4242")
-	srv, err := server.New(cfg.Addr, cfg.TLSConfig, cfg.QUICConfig, &logger)
+	conf, err := config.New[*config.ServerConfig, config.ServerConfigOpts]("conf/server.toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	output := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: false}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
+	srv, err := server.New(conf.Addr, conf.TLSConfig, conf.QUICConfig, &logger)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to create server")
 	}

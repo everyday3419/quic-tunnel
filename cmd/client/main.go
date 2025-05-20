@@ -2,27 +2,25 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
+	"log"
 	"os"
 	"os/signal"
 
 	"github.com/everyday3419/quic-tunnel/internal/client"
+	"github.com/everyday3419/quic-tunnel/internal/config"
 	"github.com/rs/zerolog"
 )
 
-const listenAddr = "localhost:8888"
-const serverAddr = "localhost:4242"
-
 func main() {
+	conf, err := config.New[*config.ClientConfig, config.ClientConfigOpts]("conf/client.toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	output := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: false}
 	logger := zerolog.New(output).With().Timestamp().Logger()
 
-	tlsConf := &tls.Config{
-		InsecureSkipVerify: true,
-		NextProtos:         []string{"quic-tunnel"},
-	}
-
-	c := client.New(listenAddr, serverAddr, tlsConf, nil, &logger)
+	c := client.New(conf.ListenAddr, conf.ServerAddr, conf.TLSConf, nil, &logger)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()

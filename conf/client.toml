@@ -1,0 +1,3 @@
+listenAddr = "localhost:8888"
+serverAddr = "localhost:4242"
+timeout = "15s"
