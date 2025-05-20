@@ -1,4 +1,4 @@
-package forwarder
+package server
 
 import (
 	"context"
@@ -11,14 +11,16 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Forwarder struct {
+type httpClient struct {
 	http3Client *http.Client
 	http2Client *http.Client
-	logger      *zerolog.Logger
-	timeout     time.Duration
+
+	timeout time.Duration
+
+	logger *zerolog.Logger
 }
 
-func New(logger *zerolog.Logger, timeout time.Duration) *Forwarder {
+func newHTTPClient(logger *zerolog.Logger, timeout time.Duration) *httpClient {
 	http3Transport := &http3.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		QUICConfig:      &quic.Config{},
@@ -27,29 +29,29 @@ func New(logger *zerolog.Logger, timeout time.Duration) *Forwarder {
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true, NextProtos: []string{"h2", "http/1.1"}},
 		ForceAttemptHTTP2: true,
 	}
-	return &Forwarder{
+	return &httpClient{
 		http3Client: &http.Client{Transport: http3Transport},
 		http2Client: &http.Client{Transport: http2Transport},
-		logger:      logger,
 		timeout:     timeout,
+		logger:      logger,
 	}
 }
 
-func (p *Forwarder) HandleRequest(req *http.Request) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(req.Context(), p.timeout)
+func (h *httpClient) handleRequest(req *http.Request) (*http.Response, error) {
+	ctx, cancel := context.WithTimeout(req.Context(), h.timeout)
 	defer cancel()
 
 	// Try HTTP/3 first
-	resp, err := p.http3Client.Do(req.WithContext(ctx))
+	resp, err := h.http3Client.Do(req.WithContext(ctx))
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("HTTP/3 not supported, falling back to HTTP/2 or HTTP/1.1")
+		h.logger.Warn().Err(err).Msg("HTTP/3 not supported, falling back to HTTP/2 or HTTP/1.1")
 		// Fallback to HTTP/2 or HTTP/1.1
-		return p.http2Client.Do(req.WithContext(ctx))
+		return h.http2Client.Do(req.WithContext(ctx))
 	}
 	return resp, nil
 }
 
-func (p *Forwarder) Close() error {
-	p.http3Client.Transport.(*http3.Transport).Close()
+func (h *httpClient) close() error {
+	h.http3Client.Transport.(*http3.Transport).Close()
 	return nil
 }

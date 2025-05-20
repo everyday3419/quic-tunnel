@@ -30,7 +30,7 @@ func newQUICClient(serverAddr string, tlsConf *tls.Config, quicConf *quic.Config
 	}
 }
 
-func (qc *quicClient) ForwardToQUIC(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (qc *quicClient) forwardToQUIC(ctx context.Context, req *http.Request) (*http.Response, error) {
 	quicConn, err := quic.DialAddr(ctx, qc.serverAddr, qc.tlsConf, qc.quicConf)
 	if err != nil {
 		qc.logger.Error().Err(err).Msg("failed to dial QUIC server")

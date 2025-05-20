@@ -12,7 +12,7 @@ import (
 )
 
 type TCPConnectionHandler interface {
-	HandleTCPConnection(ctx context.Context, tcpConn net.Conn)
+	handleTCPConnection(ctx context.Context, tcpConn net.Conn)
 }
 
 type Client struct {
@@ -66,7 +66,7 @@ func (c *Client) Run(ctx context.Context) error {
 				continue
 			}
 			c.logger.Debug().Msgf("accepted TCP connection from %s", conn.RemoteAddr().String())
-			go c.tcpListener.HandleTCPConnection(ctx, conn)
+			go c.tcpListener.handleTCPConnection(ctx, conn)
 		}
 	}
 }

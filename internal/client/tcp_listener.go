@@ -13,7 +13,7 @@ import (
 )
 
 type QUICForwarder interface {
-	ForwardToQUIC(ctx context.Context, req *http.Request) (*http.Response, error)
+	forwardToQUIC(ctx context.Context, req *http.Request) (*http.Response, error)
 }
 
 type tcpListener struct {
@@ -29,7 +29,7 @@ func newTCPListener(forwardToQUIC QUICForwarder, logger *zerolog.Logger) *tcpLis
 	}
 }
 
-func (tl *tcpListener) HandleTCPConnection(ctx context.Context, tcpConn net.Conn) {
+func (tl *tcpListener) handleTCPConnection(ctx context.Context, tcpConn net.Conn) {
 	defer tcpConn.Close()
 
 	if err := tcpConn.SetReadDeadline(time.Now().Add(15 * time.Second)); err != nil {
@@ -57,7 +57,7 @@ func (tl *tcpListener) HandleTCPConnection(ctx context.Context, tcpConn net.Conn
 	}
 	req.RequestURI = ""
 
-	resp, err := tl.forwardToQUIC.ForwardToQUIC(ctx, req)
+	resp, err := tl.forwardToQUIC.forwardToQUIC(ctx, req)
 	if err != nil {
 		tl.logger.Error().Err(err).Msg("failed to forward request to QUIC")
 		return
