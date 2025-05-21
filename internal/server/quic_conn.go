@@ -13,7 +13,7 @@ import (
 )
 
 type HTTPClientProvider interface {
-	handleRequest(req *http.Request) (*http.Response, error)
+	handleRequest(ctx context.Context, req *http.Request) (*http.Response, error)
 	close() error
 }
 
@@ -30,15 +30,15 @@ func newQUICConn(httpClient HTTPClientProvider, logger *zerolog.Logger) *quicCon
 	}
 }
 
-func (ql *quicConn) handleConnection(conn quic.Connection) {
+func (ql *quicConn) handleConnection(ctx context.Context, conn quic.Connection) {
 	for {
-		stream, err := conn.AcceptStream(context.Background())
+		stream, err := conn.AcceptStream(ctx)
 		if err != nil {
 			ql.logger.Error().Err(err).Msg("failed to accept stream")
 			return
 		}
 		go func() {
-			if err := ql.handleStream(stream); err != nil {
+			if err := ql.handleStream(ctx, stream); err != nil {
 				// t.logger.Error().Err(err).Msg("failed to handle stream")
 			}
 		}()
@@ -46,7 +46,7 @@ func (ql *quicConn) handleConnection(conn quic.Connection) {
 
 }
 
-func (ql *quicConn) handleStream(stream quic.Stream) error {
+func (ql *quicConn) handleStream(ctx context.Context, stream quic.Stream) error {
 	if err := stream.SetReadDeadline(time.Now().Add(15 * time.Second)); err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (ql *quicConn) handleStream(stream quic.Stream) error {
 	req.URL.Host = req.Host
 	req.RequestURI = ""
 
-	resp, err := ql.httpClient.handleRequest(req)
+	resp, err := ql.httpClient.handleRequest(ctx, req)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 type QUICConnectionHandler interface {
-	handleConnection(conn quic.Connection)
+	handleConnection(ctx context.Context, conn quic.Connection)
 }
 
 type Server struct {
@@ -57,14 +57,14 @@ func (s *Server) Run(ctx context.Context) error {
 		if err != nil {
 			select {
 			case <-ctx.Done():
-				return nil
+				return ctx.Err()
 			default:
 				s.logger.Error().Err(err).Msg("failed to accept connection")
 				return err
 			}
 		}
 		s.logger.Debug().Msg("accepted new QUIC connection")
-		go s.quicConn.handleConnection(conn)
+		go s.quicConn.handleConnection(ctx, conn)
 	}
 }
 
